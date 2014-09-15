@@ -4,24 +4,23 @@
 
     var module = angular.module('app', ['ngChartist']);
 
-    module.controller('ChartistExampleCtrl', [
-        function() {
+    module.controller('ChartistExampleCtrl', ['$interval', '$scope',
+        function($interval, $scope) {
+            var self = this;
             // bar chart
-            this.barData = {
+            self.barData = {
                 labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
                 series: [
-                    [5, 4, 3, 7, 5, 10, 3, 4, 8, 10, 6, 8],
-                    [3, 2, 9, 5, 4, 6, 4, 6, 7, 8, 7, 4],
                     [5, 4, 3, 7, 5, 10, 3, 4, 8, 10, 6, 8],
                     [3, 2, 9, 5, 4, 6, 4, 6, 7, 8, 7, 4]
                 ]
             };
 
-            this.barOptions = {
+            self.barOptions = {
                 seriesBarDistance: 15
             };
 
-            this.barResponsiveOptions = [
+            self.barResponsiveOptions = [
                 ['screen and (min-width: 641px) and (max-width: 1024px)', {
                     seriesBarDistance: 10,
                     axisX: {
@@ -40,11 +39,11 @@
                 }]
             ];
 
-            var generateData = function(amount, length) {
-                function getRandomInt(min, max) {
-                    return Math.floor(Math.random() * (max - min)) + min;
-                }
+            function getRandomInt(min, max) {
+              return Math.floor(Math.random() * (max - min)) + min;
+            }
 
+            var generateData = function(amount, length) {
                 var array = [];
                 length = length || null;
 
@@ -67,7 +66,7 @@
             // }
 
             // line chart
-            this.lineData = {
+            self.lineData = {
                 labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
                 series: [
                     [0, 1, 2, 4, 7, 6, 9, 10, 8, 10, 14, 13, 16, 14, 17, 19, 20, 31, 32, 26, 36, 28, 31, 40, 26, 26, 43, 47, 55, 30],
@@ -78,7 +77,7 @@
                 ]
             };
 
-            this.lineOptions = {
+            self.lineOptions = {
                 axisX: {
                     labelInterpolationFnc: function(value) {
                         return value;
@@ -87,14 +86,40 @@
             };
 
             // pie chart
-            this.pieData = {
+            self.pieData = {
                 series: [20, 10, 30, 40]
             };
 
             // donut chart
-            this.donutOptions = {
+            self.donutOptions = {
                 donut: true
             };
+
+            function pushLimit(arr, elem, limit) {
+              arr.push(elem);
+              if(arr.length > limit) {
+                arr.splice(0, 1);
+              }
+            }
+
+            // Use $interval to update bar chart data
+            var barUpdatePromise = $interval(function() {
+                var time = new Date();
+
+                pushLimit(self.barData.labels, [
+                    time.getHours(),
+                    time.getMinutes(),
+                    time.getSeconds()
+                ].join(':'), 12);
+
+                self.barData.series.forEach(function(series) {
+                  pushLimit(series, getRandomInt(0, 10), 12);
+                });
+            }, 1000);
+            // Cancel interval once scope is destroyed
+            $scope.$on('$destroy', function() {
+              $interval.cancel(barUpdatePromise);
+            });
         }
     ]);
 
