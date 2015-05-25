@@ -1,17 +1,21 @@
-/* global angular */
 (function(angular) {
     'use strict';
 
-    var module = angular.module('app', ['ngChartist']);
+    var module = angular.module('app', ['angular-chartist']);
 
-    module.controller('ChartistExampleCtrl', [
-        function() {
+    module.controller('ChartistExampleCtrl', ['$scope', '$interval',
+        function($scope, $interval) {
+
+            this.events = {
+                draw: function(obj) {
+                    // do stuff
+                }
+            };
+
             // bar chart
             this.barData = {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
                 series: [
-                    [5, 4, 3, 7, 5, 10, 3, 4, 8, 10, 6, 8],
-                    [3, 2, 9, 5, 4, 6, 4, 6, 7, 8, 7, 4],
                     [5, 4, 3, 7, 5, 10, 3, 4, 8, 10, 6, 8],
                     [3, 2, 9, 5, 4, 6, 4, 6, 7, 8, 7, 4]
                 ]
@@ -40,31 +44,9 @@
                 }]
             ];
 
-            var generateData = function(amount, length) {
-                function getRandomInt(min, max) {
-                    return Math.floor(Math.random() * (max - min)) + min;
-                }
-
-                var array = [];
-                length = length || null;
-
-                for (var i = 0; i < amount; i++) {
-                    if (length !== null) {
-
-                    } else {
-                        array.push(getRandomInt(i, i * 2));
-                    }
-                }
-
-                return array;
-            };
-
-            // uncomment these for larger data sets
-            // var data = [];
-
-            // for (var i = 0; i < 5; i++) {
-            //     data.push(generateData(30));
-            // }
+            function getRandomInt(min, max) {
+                return Math.floor(Math.random() * (max - min)) + min;
+            }
 
             // line chart
             this.lineData = {
@@ -95,6 +77,33 @@
             this.donutOptions = {
                 donut: true
             };
+
+            function pushLimit(arr, elem, limit) {
+                arr.push(elem);
+                if (arr.length > limit) {
+                    arr.splice(0, 1);
+                }
+            }
+
+            // Use $interval to update bar chart data
+            var barUpdatePromise = $interval(function() {
+                var time = new Date();
+
+                pushLimit(this.barData.labels, [
+                    time.getHours(),
+                    time.getMinutes(),
+                    time.getSeconds()
+                ].join(':'), 12);
+
+                this.barData.series.forEach(function(series) {
+                    pushLimit(series, getRandomInt(0, 10), 12);
+                });
+            }.bind(this), 1000);
+
+            // Cancel interval once scope is destroyed
+            $scope.$on('$destroy', function() {
+                $interval.cancel(barUpdatePromise);
+            });
         }
     ]);
 
